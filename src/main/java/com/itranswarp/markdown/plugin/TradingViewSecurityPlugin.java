@@ -256,7 +256,7 @@ class Security extends CustomNode implements Delimited {
 
     @Override
     public String getClosingDelimiter() {
-        return DELIMITER;
+        return getOpeningDelimiter();
     }
 
 }
