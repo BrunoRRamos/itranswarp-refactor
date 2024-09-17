@@ -86,35 +86,19 @@ public class JsonUtil {
     }
 
     public static <T> T readJson(Reader reader, Class<T> clazz) {
-        try {
-            return OBJECT_MAPPER.readValue(reader, clazz);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return JsonReader.readJson(reader, clazz);
     }
 
     public static <T> T readJson(Reader reader, TypeReference<T> ref) {
-        try {
-            return OBJECT_MAPPER.readValue(reader, ref);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return JsonReader.readJson(reader, ref);
     }
 
     public static <T> T readJson(InputStream input, Class<T> clazz) {
-        try {
-            return OBJECT_MAPPER.readValue(input, clazz);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+       return JsonReader.readJson(input, clazz);
     }
 
     public static <T> T readJson(InputStream input, TypeReference<T> ref) {
-        try {
-            return OBJECT_MAPPER.readValue(input, ref);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return JsonReader.readJson(input, ref);
     }
 
     public static <T> T readJson(String str, TypeReference<T> ref) {
