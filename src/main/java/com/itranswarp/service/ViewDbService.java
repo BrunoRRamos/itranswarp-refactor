@@ -28,19 +28,30 @@ public class ViewDbService {
         this.sqlUpdateWikiPageView = "UPDATE " + db.getTable(WikiPage.class) + " SET views = views + ? WHERE id = ?";
     }
 
+
+    private <T> long getViews(Class<T> entityType, long id) {
+            T entity = db.fetch(entityType, id);
+        if (entity == null) {
+            return 0;
+        }
+        try {
+            return (long) entity.getClass().getField("views").get(entity);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+
+            return 0;
+        }
+    }
+
     public long getArticleViews(long id) {
-        Article entity = db.fetch(Article.class, id);
-        return entity == null ? 0 : entity.views;
+        return getViews(Article.class, id);
     }
 
     public long getWikiViews(long id) {
-        Wiki entity = db.fetch(Wiki.class, id);
-        return entity == null ? 0 : entity.views;
+        return getViews(Wiki.class, id);
     }
 
     public long getWikiPageViews(long id) {
-        WikiPage entity = db.fetch(WikiPage.class, id);
-        return entity == null ? 0 : entity.views;
+        return getViews(WikiPage.class, id);
     }
 
     @Transactional

@@ -65,19 +65,8 @@ public class ViewService {
         }).toArray();
     }
 
-    public long getArticleViews(long id) {
+    public long getViews(long id){
         String value = this.redisService.hget(KEY_VIEWS, id);
         return value == null ? 0 : Long.parseLong(value);
     }
-
-    public long getWikiViews(long id) {
-        String value = this.redisService.hget(KEY_VIEWS, id);
-        return value == null ? 0 : Long.parseLong(value);
-    }
-
-    public long getWikiPageViews(long id) {
-        String value = this.redisService.hget(KEY_VIEWS, id);
-        return value == null ? 0 : Long.parseLong(value);
-    }
-
 }
