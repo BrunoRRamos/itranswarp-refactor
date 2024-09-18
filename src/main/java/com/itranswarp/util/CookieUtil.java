@@ -95,7 +95,7 @@ public class CookieUtil {
     }
 
     public static void setSessionCookie(HttpServletRequest request, HttpServletResponse response, String cookieStr, int maxAgeInSeconds) {
-        logger.info("set session cookie: " + cookieStr);
+        logger.info(String.format("set session cookie: %s",cookieStr));
         Cookie cookie = new Cookie(SESSION_COOKIE, cookieStr);
         cookie.setPath("/");
         cookie.setMaxAge(maxAgeInSeconds);

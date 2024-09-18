@@ -48,7 +48,7 @@ public final class IdUtil {
 
     private static long shardingId = -1;
 
-    private static long offset = 0;
+    private static long tinyoffset = 0;
 
     private static long lastEpoch = 0;
 
@@ -95,24 +95,25 @@ public final class IdUtil {
     private static synchronized long nextId(long epochSecond) {
         if (epochSecond < lastEpoch) {
             // warning: clock is turn back:
-            logger.warn("clock is back: " + epochSecond + " from previous:" + lastEpoch);
+            logger.warn(String.format("clock is back: %s from previous:%d",epochSecond,lastEpoch));
+
             epochSecond = lastEpoch;
         }
         if (lastEpoch != epochSecond) {
             lastEpoch = epochSecond;
             reset();
         }
-        offset++;
-        long next = offset & MAX_NEXT;
+        tinyoffset++;
+        long next = tinyoffset & MAX_NEXT;
         if (next == 0) {
-            logger.warn("maximum id reached in 1 second in epoch: " + epochSecond);
+            logger.warn(String.format("maximum id reached in 1 second in epoch: %d",epochSecond));
             return nextId(epochSecond + 1);
         }
         return generateId(epochSecond, next, shardingId);
     }
 
     private static void reset() {
-        offset = 0;
+        tinyoffset = 0;
     }
 
     private static long generateId(long epochSecond, long next, long shardId) {
