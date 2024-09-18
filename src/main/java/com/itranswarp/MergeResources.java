@@ -52,10 +52,10 @@ public class MergeResources {
     }
 
     static void merge(List<String> files, String mergeToFile) throws IOException {
-        System.out.printf("Merge %s files to %s...\n", files.size(), mergeToFile);
+        System.out.printf("Merge %s files to %s...%n", files.size(), mergeToFile);
         List<String> buffer = new ArrayList<>();
         for (String file : files) {
-            System.out.printf("  Merge %s...\n", file);
+            System.out.printf("  Merge %s...%n", file);
             List<String> lines = Files.readAllLines(Path.of(basedir + file), StandardCharsets.UTF_8);
             if (mergeToFile.endsWith(".css")) {
                 for (String line : lines) {
@@ -70,7 +70,7 @@ public class MergeResources {
                         } else {
                             Path src = basedirPath.resolve(Path.of(file).getParent().resolve(Path.of(s))).normalize();
                             Path dest = Path.of(mergeToFile).getParent().resolve(Path.of("font")).resolve(Path.of(s).getFileName()).normalize();
-                            System.out.printf("Copy %s to %s...\n", src, dest);
+                            System.out.printf("Copy %s to %s...%n", src, dest);
                             Files.copy(Path.of(basedir + src), Path.of(basedir + dest), StandardCopyOption.REPLACE_EXISTING);
                             matcher.appendReplacement(sb, "url(font/" + Path.of(s).getFileName() + ")");
                         }

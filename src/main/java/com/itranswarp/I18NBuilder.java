@@ -39,7 +39,7 @@ public class I18NBuilder {
 
     public static void main(String[] args) throws Exception {
         Path templatePath = Paths.get("./src/main/resources/templates").toAbsolutePath().normalize();
-        logger.info("Scan path {}...", templatePath.toString());
+        logger.info("Scan path {}...", templatePath);
         Set<String> keys = new TreeSet<>();
         Files.walk(templatePath).filter(Files::isRegularFile).filter(p -> {
             return p.toFile().getName().endsWith(".html");
@@ -58,7 +58,7 @@ public class I18NBuilder {
 
         // update json:
         Path i18nPath = Paths.get("./src/main/resources/i18n").toAbsolutePath().normalize();
-        logger.info("Scan path {}...", i18nPath.toString());
+        logger.info("Scan path {}...", i18nPath);
         Files.walk(i18nPath, 1).filter(Files::isRegularFile).filter(p -> {
             return p.toFile().getName().endsWith(".json");
         }).forEach(p -> {

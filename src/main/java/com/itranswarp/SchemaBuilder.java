@@ -101,14 +101,14 @@ public class SchemaBuilder {
         String schema = String.join("\n", tables);
         StringBuilder sb = new StringBuilder(4096);
         sb.append("\n\n-- BEGIN generate DDL --\n\n");
-        sb.append(String.format("DROP DATABASE IF EXISTS %s;\n\n", dbName));
-        sb.append(String.format("CREATE DATABASE %s;\n\n", dbName));
+        sb.append(String.format("DROP DATABASE IF EXISTS %s;%n%n", dbName));
+        sb.append(String.format("CREATE DATABASE %s;%n%n", dbName));
         if (!"root".equals(dbUser)) {
-            sb.append(String.format("CREATE USER IF NOT EXISTS %s@'%%' IDENTIFIED BY '%s';\n\n", dbUser, dbPassword));
-            sb.append(String.format("GRANT SELECT,INSERT,DELETE,UPDATE ON %s.* TO %s@'%%' WITH GRANT OPTION;\n\n", dbName, dbUser));
-            sb.append(String.format("FLUSH PRIVILEGES;\n\n"));
+            sb.append(String.format("CREATE USER IF NOT EXISTS %s@'%%' IDENTIFIED BY '%s';%n%n", dbUser, dbPassword));
+            sb.append(String.format("GRANT SELECT,INSERT,DELETE,UPDATE ON %s.* TO %s@'%%' WITH GRANT OPTION;%n%n", dbName, dbUser));
+            sb.append(String.format("FLUSH PRIVILEGES;%n%n"));
         }
-        sb.append(String.format("USE %s;\n\n", dbName));
+        sb.append(String.format("USE %s;%n%n", dbName));
         sb.append(schema);
         sb.append("\n-- END generate DDL --\n");
         return sb.toString();
@@ -406,7 +406,7 @@ public class SchemaBuilder {
             }
             return v.toString();
         }).toArray(String[]::new));
-        return String.format("INSERT INTO %s (%s) VALUES (%s);\n", table, fields, values);
+        return String.format("INSERT INTO %s (%s) VALUES (%s);%n", table, fields, values);
     }
 
     String escape(String value) {
