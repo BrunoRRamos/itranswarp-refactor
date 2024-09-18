@@ -161,7 +161,7 @@ public class PasskeyApiController extends AbstractController {
         var attestedCredentialData = authenticatorData.getAttestedCredentialData();
         var credentialId = attestedCredentialData.getCredentialId();
         var key = attestedCredentialData.getCOSEKey();
-        if (key instanceof EC2COSEKey ec2Key) {
+        if (key instanceof EC2COSEKey) {
             byte[] keyBytes = objectConverter.getCborConverter().writeValueAsBytes(key);
             return new String[] { challenge, Base64UrlUtil.encodeToString(credentialId), Base64UrlUtil.encodeToString(keyBytes) };
         } else {

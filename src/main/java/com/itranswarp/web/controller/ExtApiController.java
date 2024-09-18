@@ -107,7 +107,7 @@ public class ExtApiController extends AbstractService {
         return "_cgpt_" + ZonedDateTime.now(this.zoneId).toLocalDate() + "_" + user.id;
     }
 
-    boolean isGptRateLimitExceeded(long increment) {
+    boolean isGptRateLimitExceeded() {
         User user = HttpContext.getCurrentUser();
         if (user == null) {
             return true;
@@ -121,7 +121,7 @@ public class ExtApiController extends AbstractService {
 
     @GetMapping("/gpt/ratelimit")
     public Map<String, Boolean> chatGptRateLimit() {
-        return Map.of("result", !this.chatGptEnabled || isGptRateLimitExceeded(0));
+        return Map.of("result", !this.chatGptEnabled || isGptRateLimitExceeded());
     }
 
     @PostMapping("/gpt")
