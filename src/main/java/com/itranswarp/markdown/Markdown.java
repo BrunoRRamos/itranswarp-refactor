@@ -63,7 +63,7 @@ public class Markdown {
         this.sysRenderer = HtmlRenderer.builder().extensions(extensionList).nodeRendererFactory(context -> new CustomImageHtmlNodeRenderer(context, loadingUrl))
                 .nodeRendererFactory(context -> new CustomLinkHtmlNodeRenderer(context, patternLinkRenderers)).build();
 
-        this.ugcRenderer = HtmlRenderer.builder().extensions(extensionList).escapeHtml(true).nodeRendererFactory(context -> new SafeLinkNodeRenderer(context))
+        this.ugcRenderer = HtmlRenderer.builder().extensions(extensionList).escapeHtml(true).nodeRendererFactory(SafeLinkNodeRenderer::new)
                 .build();
     }
 
@@ -152,15 +152,14 @@ class CustomImageHtmlNodeRenderer implements NodeRenderer {
  * 
  * @author liaoxuefeng
  */
-class CustomLinkHtmlNodeRenderer implements NodeRenderer {
+class CustomLinkHtmlNodeRenderer extends AbstractNodeRenderer {
 
     private final List<PatternLinkRenderer> patternLinkRenderers;
-    private final HtmlNodeRendererContext context;
     private final HtmlWriter html;
 
     CustomLinkHtmlNodeRenderer(HtmlNodeRendererContext context, List<PatternLinkRenderer> patternLinkRenderers) {
+        super(context);
         this.patternLinkRenderers = patternLinkRenderers;
-        this.context = context;
         this.html = context.getWriter();
     }
 
@@ -188,28 +187,22 @@ class CustomLinkHtmlNodeRenderer implements NodeRenderer {
         visitChildren(link);
         html.tag("/a");
     }
-
-    protected void visitChildren(Node parent) {
-        Node node = parent.getFirstChild();
-        while (node != null) {
-            Node next = node.getNext();
-            context.render(node);
-            node = next;
-        }
-    }
 }
+
+
 
 /**
  * Render link as rel="nofollow" href="no-script".
  * 
  * @author liaoxuefeng
  */
-class SafeLinkNodeRenderer implements NodeRenderer {
+class SafeLinkNodeRenderer extends AbstractNodeRenderer {
 
     private final HtmlNodeRendererContext context;
     private final HtmlWriter html;
 
     SafeLinkNodeRenderer(HtmlNodeRendererContext context) {
+        super(context);
         this.context = context;
         this.html = context.getWriter();
     }
@@ -237,15 +230,6 @@ class SafeLinkNodeRenderer implements NodeRenderer {
         html.tag("a", context.extendAttributes(node, "a", attrs));
         visitChildren(link);
         html.tag("/a");
-    }
-
-    protected void visitChildren(Node parent) {
-        Node node = parent.getFirstChild();
-        while (node != null) {
-            Node next = node.getNext();
-            context.render(node);
-            node = next;
-        }
     }
 }
 
