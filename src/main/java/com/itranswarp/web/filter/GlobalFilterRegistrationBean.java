@@ -1,6 +1,7 @@
 package com.itranswarp.web.filter;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
@@ -84,86 +85,134 @@ public class GlobalFilterRegistrationBean extends FilterRegistrationBean<Filter>
     }
 
     class GlobalFilter implements Filter {
-
         @Override
         public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException, ServletException {
             HttpServletRequest request = (HttpServletRequest) req;
             HttpServletResponse response = (HttpServletResponse) resp;
+            setupRequestAndResponse(request, response);
+
+            if (handleSpamCheck(request, response)) return;
+            if (handleRateLimit(request, response)) return;
+
+            User user = authenticateUser(request, response);
+
+            if (handleManageAccess(request, response, user)) return;
+
+            chain.doFilter(request, response);
+        }
+
+        private void setupRequestAndResponse(HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException, UnsupportedEncodingException {
             request.setCharacterEncoding("UTF-8");
             response.setHeader("X-Server-ID", serverId);
+            if (!request.getRequestURI().startsWith("/files/")) {
+                response.setCharacterEncoding("UTF-8");
+            }
+        }
+
+        private boolean handleSpamCheck(HttpServletRequest request, HttpServletResponse response) {
             final String ip = HttpUtil.getIPAddress(request);
             if (antiSpamService.isSpamIp(ip)) {
                 response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-                return;
+                return true;
             }
+            return false;
+        }
+
+        private boolean handleRateLimit(HttpServletRequest request, HttpServletResponse response) {
             final String path = request.getRequestURI();
-            // check rate limit but except static file:
-            if (!path.startsWith("/static/") && !path.startsWith("/files/")) {
-                int remaining = rateLimiter.getRateLimit("www", ip, rateLimit, rateLimitBurst);
-                response.setIntHeader("X-RateLimit-Limit", rateLimit);
-                if (remaining <= 0) {
-                    response.setIntHeader("X-RateLimit-Remaining", 0);
-                    response.setStatus(rateLimitErrorCode);
-                    return;
-                }
-                response.setIntHeader("X-RateLimit-Remaining", remaining - 1);
+            if (path.startsWith("/static/") || path.startsWith("/files/")) {
+                return false;
             }
-            User user = null;
+
+            final String ip = HttpUtil.getIPAddress(request);
+            int remaining = rateLimiter.getRateLimit("www", ip, rateLimit, rateLimitBurst);
+            response.setIntHeader("X-RateLimit-Limit", rateLimit);
+
+            if (remaining <= 0) {
+                response.setIntHeader("X-RateLimit-Remaining", 0);
+                response.setStatus(rateLimitErrorCode);
+                return true;
+            }
+
+            response.setIntHeader("X-RateLimit-Remaining", remaining - 1);
+            return false;
+        }
+
+        private User authenticateUser(HttpServletRequest request, HttpServletResponse response) {
             String cookieStr = CookieUtil.findSessionCookie(request);
-            if (cookieStr != null) {
-                SessionCookieBean session = CookieUtil.decodeSessionCookie(cookieStr);
-                if (session == null) {
-                    CookieUtil.deleteSessionCookie(request, response);
-                } else {
-                    if ("local".equals(session.authProvider)) {
-                        LocalAuth auth = userService.fetchLocalAuthById(session.id);
-                        if (auth != null && session.validate(auth.passwd, encryptService.getSessionHmacKey())) {
-                            user = userService.getEnabledUserById(auth.userId);
-                        } else {
-                            CookieUtil.deleteSessionCookie(request, response);
-                        }
-                    } else if ("eth".equals(session.authProvider)) {
-                        EthAuth auth = userService.fetchEthAuthById(session.id);
-                        if (auth != null && session.validate(auth.address, encryptService.getSessionHmacKey())) {
-                            user = userService.getEnabledUserById(auth.userId);
-                        } else {
-                            CookieUtil.deleteSessionCookie(request, response);
-                        }
-                    } else if ("passkey".equals(session.authProvider)) {
-                        PasskeyAuth auth = userService.fetchPasskeyAuth(session.id);
-                        if (auth != null && session.validate(auth.pubKey, encryptService.getSessionHmacKey())) {
-                            user = userService.getEnabledUserById(auth.userId);
-                        } else {
-                            CookieUtil.deleteSessionCookie(request, response);
-                        }
-                    } else {
-                        OAuth auth = userService.fetchOAuthById(session.authProvider, session.id);
-                        if (auth != null && session.validate(auth.authToken, encryptService.getSessionHmacKey())) {
-                            user = userService.getEnabledUserById(auth.userId);
-                        } else {
-                            CookieUtil.deleteSessionCookie(request, response);
-                        }
-                    }
-                }
+            if (cookieStr == null) {
+                return null;
             }
+
+            SessionCookieBean session = CookieUtil.decodeSessionCookie(cookieStr);
+            if (session == null) {
+                CookieUtil.deleteSessionCookie(request, response);
+                return null;
+            }
+
+            return authenticateByProvider(session, request, response);
+        }
+
+        private User authenticateByProvider(SessionCookieBean session, HttpServletRequest request, HttpServletResponse response) {
+            switch (session.authProvider) {
+                case "local":
+                    return authenticateLocal(session, request, response);
+                case "eth":
+                    return authenticateEth(session, request, response);
+                case "passkey":
+                    return authenticatePasskey(session, request, response);
+                default:
+                    return authenticateOAuth(session, request, response);
+            }
+        }
+
+        private User authenticateLocal(SessionCookieBean session, HttpServletRequest request, HttpServletResponse response) {
+            LocalAuth auth = userService.fetchLocalAuthById(session.id);
+            return validateAuth(auth, session, auth != null ? auth.passwd : null, String.valueOf(auth != null ? auth.userId : null), request, response);
+        }
+
+        private User authenticateEth(SessionCookieBean session, HttpServletRequest request, HttpServletResponse response) {
+            EthAuth auth = userService.fetchEthAuthById(session.id);
+            return validateAuth(auth, session, auth != null ? auth.address : null, String.valueOf(auth != null ? auth.userId : null), request, response);
+        }
+
+        private User authenticatePasskey(SessionCookieBean session, HttpServletRequest request, HttpServletResponse response) {
+            PasskeyAuth auth = userService.fetchPasskeyAuth(session.id);
+            return validateAuth(auth, session, auth != null ? auth.pubKey : null, String.valueOf(auth != null ? auth.userId : null), request, response);
+        }
+
+        private User authenticateOAuth(SessionCookieBean session, HttpServletRequest request, HttpServletResponse response) {
+            OAuth auth = userService.fetchOAuthById(session.authProvider, session.id);
+            return validateAuth(auth, session, auth != null ? auth.authToken : null, String.valueOf(auth != null ? auth.userId : null), request, response);
+        }
+
+        private User validateAuth(Object auth, SessionCookieBean session, String validationKey, String userId, HttpServletRequest request, HttpServletResponse response) {
+            if (auth != null && session.validate(validationKey, encryptService.getSessionHmacKey())) {
+                return userService.getEnabledUserById(Long.parseLong(userId));
+            } else {
+                CookieUtil.deleteSessionCookie(request, response);
+                return null;
+            }
+        }
+
+        private boolean handleManageAccess(HttpServletRequest request, HttpServletResponse response, User user) throws IOException {
             String uri = request.getRequestURI();
-            if (!uri.startsWith("/files/")) {
-                response.setCharacterEncoding("UTF-8");
+            if (!uri.startsWith("/manage/")) {
+                return false;
             }
-            if (uri.startsWith("/manage/")) {
-                if (user == null) {
-                    response.sendRedirect("/auth/signin");
-                    return;
-                }
-                if (user.role.value > Role.CONTRIBUTOR.value) {
-                    logger.info("prevent access /manage/ for user {}.", user);
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN);
-                    return;
-                }
+
+            if (user == null) {
+                response.sendRedirect("/auth/signin");
+                return true;
             }
-            try (HttpContext context = new HttpContext(user, request, response, ip)) {
-                chain.doFilter(req, resp);
+
+            if (user.role.value > Role.CONTRIBUTOR.value) {
+                logger.info("prevent access /manage/ for user {}.", user);
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return true;
             }
+
+            return false;
         }
     }
 }
