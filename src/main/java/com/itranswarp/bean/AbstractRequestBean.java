@@ -127,15 +127,16 @@ public abstract class AbstractRequestBean {
     }
 
     private String checkString(String paramName, int maxLength, String s) {
+        final String PARAMETER = "Parameter ";
         if (s == null) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, paramName, "Parameter " + paramName + " must not be null.");
+            throw new ApiException(ApiError.PARAMETER_INVALID, paramName, PARAMETER + paramName + " must not be null.");
         }
         s = s.strip();
         if (s.isEmpty()) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, paramName, "Parameter " + paramName + " must not be emtpy.");
+            throw new ApiException(ApiError.PARAMETER_INVALID, paramName, PARAMETER + paramName + " must not be emtpy.");
         }
         if (s.length() > maxLength) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, paramName, "Parameter " + paramName + " is too long.");
+            throw new ApiException(ApiError.PARAMETER_INVALID, paramName, PARAMETER + paramName + " is too long.");
         }
         return s;
     }
