@@ -24,15 +24,15 @@ import com.itranswarp.util.JsonUtil;
 public class Translators extends AbstractService {
 
     Translator defaultTranslator;
-    Map<String, Translator> translators;
+    Map<String, Translator> translatorsMap;
     List<Language> languages;
 
     @PostConstruct
     public void init() throws IOException {
         List<Translator> list = getTranslators("i18n");
         this.languages = list.stream().map(t -> new Language(t.getDisplayName(), t.getLocaleName())).collect(Collectors.toList());
-        this.translators = list.stream().collect(Collectors.toMap(Translator::getLocaleName, t -> t));
-        this.defaultTranslator = this.translators.getOrDefault("en", new DefaultTranslator());
+        this.translatorsMap = list.stream().collect(Collectors.toMap(Translator::getLocaleName, t -> t));
+        this.defaultTranslator = this.translatorsMap.getOrDefault("en", new DefaultTranslator());
     }
 
     public Translator getTranslator(Locale locale) {
@@ -41,11 +41,11 @@ public class Translators extends AbstractService {
         Translator t = null;
         if (!c.isEmpty()) {
             // try get language + COUNTRY:
-            t = this.translators.get(l + "_" + c);
+            t = this.translatorsMap.get(l + "_" + c);
         }
         if (t == null) {
             // try get language only:
-            t = this.translators.get(l);
+            t = this.translatorsMap.get(l);
         }
         if (t == null) {
             t = defaultTranslator;
