@@ -54,36 +54,58 @@ public class MergeResources {
     static void merge(List<String> files, String mergeToFile) throws IOException {
         System.out.printf("Merge %s files to %s...%n", files.size(), mergeToFile);
         List<String> buffer = new ArrayList<>();
+
         for (String file : files) {
             System.out.printf("  Merge %s...%n", file);
             List<String> lines = Files.readAllLines(Path.of(basedir + file), StandardCharsets.UTF_8);
+
             if (mergeToFile.endsWith(".css")) {
-                for (String line : lines) {
-                    // find data url:
-                    StringBuilder sb = new StringBuilder();
-                    Matcher matcher = URL_PATTERN.matcher(line);
-                    while (matcher.find()) {
-                        String s = matcher.group(1);
-                        System.out.println("-- " + s + "" + "\n-- " + matcher.group(0));
-                        if (s.startsWith("data:")) {
-                            matcher.appendReplacement(sb, matcher.group(0));
-                        } else {
-                            Path src = basedirPath.resolve(Path.of(file).getParent().resolve(Path.of(s))).normalize();
-                            Path dest = Path.of(mergeToFile).getParent().resolve(Path.of("font")).resolve(Path.of(s).getFileName()).normalize();
-                            System.out.printf("Copy %s to %s...%n", src, dest);
-                            Files.copy(Path.of(basedir + src), Path.of(basedir + dest), StandardCopyOption.REPLACE_EXISTING);
-                            matcher.appendReplacement(sb, "url(font/" + Path.of(s).getFileName() + ")");
-                        }
-                    }
-                    matcher.appendTail(sb);
-                    buffer.add(sb.toString());
-                }
+                processCssFile(file, lines, buffer, mergeToFile);
             } else {
                 buffer.addAll(lines);
             }
         }
+
         buffer.add("");
         Files.writeString(Path.of(basedir + mergeToFile), String.join("\n", buffer), StandardCharsets.UTF_8);
+    }
+    private static void processCssFile(String file, List<String> lines, List<String> buffer, String mergeToFile) {
+        for (String line : lines) {
+            buffer.add(processUrlsInCssLine(file, line, mergeToFile));
+        }
+    }
+
+    private static String processUrlsInCssLine(String file, String line, String mergeToFile) {
+        StringBuilder sb = new StringBuilder();
+        Matcher matcher = URL_PATTERN.matcher(line);
+
+        while (matcher.find()) {
+            String url = matcher.group(1);
+            System.out.println("-- " + url + "\n-- " + matcher.group(0));
+
+            if (url.startsWith("data:")) {
+                matcher.appendReplacement(sb, matcher.group(0));
+            } else {
+                processNonDataUrl(file, url, mergeToFile, matcher, sb);
+            }
+        }
+
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    private static void processNonDataUrl(String file, String url, String mergeToFile, Matcher matcher, StringBuilder sb) {
+        Path src = basedirPath.resolve(Path.of(file).getParent().resolve(Path.of(url))).normalize();
+        Path dest = Path.of(mergeToFile).getParent().resolve(Path.of("font")).resolve(Path.of(url).getFileName()).normalize();
+
+        System.out.printf("Copy %s to %s...%n", src, dest);
+        try {
+            Files.copy(Path.of(basedir + src), Path.of(basedir + dest), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            System.err.printf("Failed to copy file from %s to %s: %s%n", src, dest, e.getMessage());
+        }
+
+        matcher.appendReplacement(sb, "url(font/" + Path.of(url).getFileName() + ")");
     }
 
     static final Pattern URL_PATTERN = Pattern.compile("url\\([\\\"\\\']?([^\\(\\)]+)[\\\"\\\']?\\)");
