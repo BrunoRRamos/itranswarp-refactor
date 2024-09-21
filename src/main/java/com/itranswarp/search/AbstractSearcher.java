@@ -88,73 +88,72 @@ public abstract class AbstractSearcher extends AbstractService {
      * loading from classpath:
      */
     static ADictionary createCustomizedDictionary(SegmenterConfig config, boolean sync, boolean loadDic) {
-        final ADictionary dic = new HashMapDictionary(config, sync) {
-            /**
-             * Fix load classpath in SpringBoot:
-             */
-            @Override
-            public void loadClassPath() throws IOException {
-                final Class<?> dClass = ADictionary.class;
-                final CodeSource codeSrc = dClass.getProtectionDomain().getCodeSource();
-                if (codeSrc == null) {
-                    return;
-                }
+        ADictionary dic = createDictionaryWithCustomLoadClassPath(config, sync);
 
-                final String codePath = codeSrc.getLocation().getPath();
-                // FIXME: add test for endsWith(".jar!/"):
-                if (codePath.toLowerCase().endsWith(".jar") || codePath.toLowerCase().endsWith(".jar!/")) {
-                    final ZipInputStream zip = new ZipInputStream(codeSrc.getLocation().openStream());
-                    while (true) {
-                        ZipEntry e = zip.getNextEntry();
-                        if (e == null) {
-                            break;
-                        }
-
-                        String fileName = e.getName();
-                        if (fileName.endsWith(".lex") && fileName.startsWith("lexicon/lex-")) {
-                            load(dClass.getResourceAsStream("/" + fileName));
-                        }
-                    }
-                } else {
-                    // now, the classpath is an IDE directory
-                    // like eclipse ./bin or maven ./target/classes/
-                    final File lexiconDir = new File(URLDecoder.decode(codeSrc.getLocation().getFile(), "utf-8"));
-                    loadDirectory(lexiconDir.getPath() + File.separator + "lexicon");
-                }
-            }
-
-        };
         if (!loadDic) {
             return dic;
         }
 
         try {
-            /*
-             * @Note: updated at 2016/07/07
-             * 
-             * check and load all the lexicons with more than one path if specified none
-             * lexicon paths (config.getLexiconPath() is null) And we directly load the
-             * default lexicons that in the class path
-             */
-            String[] lexPath = config.getLexiconPath();
-            if (lexPath == null) {
-                dic.loadClassPath();
-            } else {
-                for (String lPath : lexPath)
-                    dic.loadDirectory(lPath);
-                if (config.isAutoload())
-                    dic.startAutoload();
-            }
-
-            /*
-             * added at 2017/06/10 check and reset synonyms net of the current Dictionary
-             */
+            loadDictionary(dic, config);
             dic.resetSynonymsNet();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return dic;
+    }
+
+    private static ADictionary createDictionaryWithCustomLoadClassPath(SegmenterConfig config, boolean sync) {
+        return new HashMapDictionary(config, sync) {
+            @Override
+            public void loadClassPath() throws IOException {
+                CodeSource codeSrc = ADictionary.class.getProtectionDomain().getCodeSource();
+                if (codeSrc == null) return;
+
+                String codePath = codeSrc.getLocation().getPath();
+                if (isJarFile(codePath)) {
+                    loadFromJar(codeSrc);
+                } else {
+                    loadFromDirectory(codeSrc);
+                }
+            }
+
+            private boolean isJarFile(String codePath) {
+                return codePath.toLowerCase().endsWith(".jar") || codePath.toLowerCase().endsWith(".jar!/");
+            }
+
+            private void loadFromJar(CodeSource codeSrc) throws IOException {
+                try (ZipInputStream zip = new ZipInputStream(codeSrc.getLocation().openStream())) {
+                    ZipEntry e;
+                    while ((e = zip.getNextEntry()) != null) {
+                        String fileName = e.getName();
+                        if (fileName.endsWith(".lex") && fileName.startsWith("lexicon/lex-")) {
+                            load(ADictionary.class.getResourceAsStream("/" + fileName));
+                        }
+                    }
+                }
+            }
+
+            private void loadFromDirectory(CodeSource codeSrc) throws IOException {
+                File lexiconDir = new File(URLDecoder.decode(codeSrc.getLocation().getFile(), "utf-8"));
+                loadDirectory(lexiconDir.getPath() + File.separator + "lexicon");
+            }
+        };
+    }
+
+    private static void loadDictionary(ADictionary dic, SegmenterConfig config) throws IOException {
+        String[] lexPath = config.getLexiconPath();
+        if (lexPath == null) {
+            dic.loadClassPath();
+        } else {
+            for (String lPath : lexPath) {
+                dic.loadDirectory(lPath);
+            }
+            if (config.isAutoload()) {
+                dic.startAutoload();
+            }
+        }
     }
 
     public boolean ready() {
