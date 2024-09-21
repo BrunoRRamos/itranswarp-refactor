@@ -382,18 +382,10 @@ public class MvcController extends AbstractController {
         boolean oauthEnabled = !this.oauthProviders.getOAuthProviders().isEmpty();
         boolean passauthEnabled = this.passauthEnabled;
         boolean passkeyauthEnabled = this.passkeyauthEnabled;
-        if (!oauthEnabled && !passauthEnabled) {
-            throw new ApiException(ApiError.INTERNAL_SERVER_ERROR, null, "Invalid signin configuration.");
-        }
-        if (!oauthEnabled && type.equals("oauth")) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, "type", "Do not support OAuth signin.");
-        }
-        if (!passauthEnabled && type.equals("passauth")) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, "type", "Do not support password signin.");
-        }
-        if (!passkeyauthEnabled && type.equals("passkeyauth")) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, "type", "Do not support passkey signin.");
-        }
+        newref(oauthEnabled, !passauthEnabled, ApiError.INTERNAL_SERVER_ERROR, null, "Invalid signin configuration.");
+        newref(oauthEnabled, type.equals("oauth"), ApiError.PARAMETER_INVALID, "type", "Do not support OAuth signin.");
+        newref(passauthEnabled, type.equals("passauth"), ApiError.PARAMETER_INVALID, "type", "Do not support password signin.");
+        newref(passkeyauthEnabled, type.equals("passkeyauth"), ApiError.PARAMETER_INVALID, "type", "Do not support passkey signin.");
         if (type.isEmpty() && oauthEnabled) {
             type = "oauth";
         }
@@ -408,6 +400,12 @@ public class MvcController extends AbstractController {
         }
         return prepareModelAndView("signin.html", Map.of("type", type, "oauthEnabled", oauthEnabled, "passauthEnabled", passauthEnabled, "passkeyauthEnabled",
                 passkeyauthEnabled, "ethauthEnabled", ethauthEnabled, "oauthConfigurations", this.oauthProviders.getOAuthConfigurations()));
+    }
+
+    public void newref(boolean oauthEnabled, boolean b, ApiError apiError, String o, String s) {
+        if (!oauthEnabled && b) {
+            throw new ApiException(apiError, o, s);
+        }
     }
 
     @PostMapping("/auth/signin/local")
