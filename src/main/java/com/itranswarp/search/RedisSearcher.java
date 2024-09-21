@@ -26,7 +26,7 @@ import io.lettuce.core.RedisCommandExecutionException;
 @Component
 public class RedisSearcher extends AbstractSearcher {
 
-    final String CONTENT = "content";
+    static final String CONTENT = "content";
 
     static final String REDISEARCH_INDEX_NAME = "idx:doc";
 
