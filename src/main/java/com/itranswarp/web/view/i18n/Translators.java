@@ -69,7 +69,7 @@ public class Translators extends AbstractService {
                 Map<String, String> map = JsonUtil.readJson(input, JsonUtil.TYPE_MAP_STRING_STRING);
                 String displayName = map.remove("__name__");
                 if (displayName == null) {
-                    logger.warn("No display name found in resource {}: using default: {}.", filename, locale.toString());
+                    logger.warn("No display name found in resource {}: using default: {}.", filename, locale);
                     displayName = locale.toString();
                 }
                 Translator translator = new MapTranslator(locale.toString(), displayName, map);

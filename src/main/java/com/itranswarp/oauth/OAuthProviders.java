@@ -32,7 +32,7 @@ public class OAuthProviders extends AbstractService {
     public void init() {
         this.enabledOAuthProviders = this.allOAuthProviders.stream().filter(p -> p.isEnabled()).collect(Collectors.toList());
         this.enabledOAuthProviderMap = this.enabledOAuthProviders.stream().map(p -> {
-            logger.info("Found OAuth provider: " + p.getProviderId());
+            logger.info(String.format("Found OAuth provider: %s", p.getProviderId()));
             return p;
         }).collect(Collectors.toMap(AbstractOAuthProvider::getProviderId, p -> p));
 

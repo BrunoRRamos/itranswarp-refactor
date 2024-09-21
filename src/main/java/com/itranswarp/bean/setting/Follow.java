@@ -48,7 +48,7 @@ public class Follow extends AbstractSettingBean {
             }
         });
         return list;
-    };
+    }
 
     private static final List<Field> FIELDS = Arrays.stream(Follow.class.getFields()).sorted((f1, f2) -> f1.getName().compareTo(f2.getName()))
             .collect(Collectors.toList());
