@@ -82,7 +82,7 @@ public class SchemaBuilder {
     User subscriber;
     long[] imageIds;
 
-    final String SAMPLE = "sample";
+    static final String SAMPLE = "sample";
 
     AtomicLong nextId = new AtomicLong();
 
