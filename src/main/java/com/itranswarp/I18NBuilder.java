@@ -59,6 +59,10 @@ public class I18NBuilder {
         // update json:
         Path i18nPath = Paths.get("./src/main/resources/i18n").toAbsolutePath().normalize();
         logger.info("Scan path {}...", i18nPath);
+        extract1(keys, i18nPath);
+    }
+
+    public static void extract1(Set<String> keys, Path i18nPath) throws IOException {
         Files.walk(i18nPath, 1).filter(Files::isRegularFile).filter(p -> {
             return p.toFile().getName().endsWith(".json");
         }).forEach(p -> {
@@ -105,7 +109,6 @@ public class I18NBuilder {
                 logger.warn("Untranslated key: {}", key);
             }
         }
-        // remove last ",":
         if (!lines.isEmpty()) {
             String last = lines.remove(lines.size() - 1);
             lines.add(last.substring(0, last.length() - 1));
