@@ -46,9 +46,12 @@ public class DateTimeFilter extends AbstractFilter {
         if (input == null) {
             return null;
         }
+
         final String format = (String) args.get("format");
         TemporalAccessor ta = null;
-        DateTimeFormatter formatter = null;
+        DateTimeFormatter formatter;
+
+        formatter = format == null ? getDefaultFormatter(input) : DateTimeFormatter.ofPattern(format, Locale.US);
 
         if (input instanceof Long) {
             Long n = (Long) input;
@@ -56,25 +59,38 @@ public class DateTimeFilter extends AbstractFilter {
                 return null;
             }
             ta = Instant.ofEpochMilli(n).atZone(zoneId);
-            formatter = format == null ? DATETIME_FORMATTER : DateTimeFormatter.ofPattern(format, Locale.US);
         } else if (input instanceof ZonedDateTime) {
             ta = (ZonedDateTime) input;
-            formatter = format == null ? DATETIME_FORMATTER : DateTimeFormatter.ofPattern(format, Locale.US);
-        } else if (input instanceof LocalDateTime) {
-            LocalDateTime ldt = (LocalDateTime) input;
-            ta = ldt.atZone(zoneId);
-            formatter = format == null ? DATETIME_FORMATTER : DateTimeFormatter.ofPattern(format, Locale.US);
-        } else if (input instanceof LocalDate) {
-            ta = (LocalDate) input;
-            formatter = format == null ? DATE_FORMATTER : DateTimeFormatter.ofPattern(format, Locale.US);
-        } else if (input instanceof LocalTime) {
-            ta = (LocalTime) input;
-            formatter = format == null ? TIME_FORMATTER : DateTimeFormatter.ofPattern(format, Locale.US);
+        } else {
+            ta = getTemporalAccessor(input, ta);
         }
+
         if (ta == null) {
             return null;
         }
+
         return formatter.format(ta);
+    }
+
+    public TemporalAccessor getTemporalAccessor(Object input, TemporalAccessor ta) {
+        if (input instanceof LocalDateTime) {
+            ta = ((LocalDateTime) input).atZone(zoneId);
+        } else if (input instanceof LocalDate) {
+            ta = (LocalDate) input;
+        } else if (input instanceof LocalTime) {
+            ta = (LocalTime) input;
+        }
+        return ta;
+    }
+
+    private DateTimeFormatter getDefaultFormatter(Object input) {
+        if (input instanceof LocalDate) {
+            return DATE_FORMATTER;
+        } else if (input instanceof LocalTime) {
+            return TIME_FORMATTER;
+        } else {
+            return DATETIME_FORMATTER;
+        }
     }
 
 }
