@@ -82,6 +82,8 @@ public class SchemaBuilder {
     User subscriber;
     long[] imageIds;
 
+    final String SAMPLE = "sample";
+
     AtomicLong nextId = new AtomicLong();
 
     SchemaBuilder() {
@@ -232,7 +234,7 @@ public class SchemaBuilder {
         Category category = new Category();
         category.id = nextId.incrementAndGet();
         category.name = "Sample";
-        category.tag = "sample";
+        category.tag = SAMPLE;
         category.description = "Java Series";
         entities.add(category);
 
@@ -282,7 +284,7 @@ public class SchemaBuilder {
         wiki.description = "A Sample Wiki";
         wiki.imageId = imageIds[0];
         wiki.name = "Sample Tutorial";
-        wiki.tag = "sample";
+        wiki.tag = SAMPLE;
         wiki.textId = initText(entities).id;
         wiki.userId = admin.id;
         entities.add(wiki);
@@ -338,7 +340,7 @@ public class SchemaBuilder {
         board.id = nextId.incrementAndGet();
         board.name = "Discuss Sample";
         board.description = "Discuss Sample.";
-        board.tag = "sample";
+        board.tag = SAMPLE;
         board.topicNumber = 20;
         entities.add(board);
 
