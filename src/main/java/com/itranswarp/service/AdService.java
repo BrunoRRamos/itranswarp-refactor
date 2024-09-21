@@ -35,6 +35,8 @@ public class AdService extends AbstractDbService<AdSlot> {
 
     static final String KEY_AD = "__ad__";
 
+    static final String AD_PERIOD = "AdPeriod";
+
     public void deleteAdInfoFromCache() {
         this.redisService.del(KEY_AD);
     }
@@ -106,7 +108,7 @@ public class AdService extends AbstractDbService<AdSlot> {
     public AdPeriod getAdPeriodById(long id) {
         AdPeriod ap = this.db.fetch(AdPeriod.class, id);
         if (ap == null) {
-            throw new ApiException(ApiError.ENTITY_NOT_FOUND, "AdPeriod", "AdPeriod not found.");
+            throw new ApiException(ApiError.ENTITY_NOT_FOUND, AD_PERIOD, "AdPeriod not found.");
         }
         return ap;
     }
@@ -125,7 +127,7 @@ public class AdService extends AbstractDbService<AdSlot> {
         AdSlot slot = this.getById(bean.adSlotId);
         List<AdPeriod> all = getAdPeriodsByAdSlot(slot);
         if (all.size() >= slot.numSlots) {
-            throw new ApiException(ApiError.OPERATION_FAILED, "AdPeriod", "Cannot create more AdPeriod");
+            throw new ApiException(ApiError.OPERATION_FAILED, AD_PERIOD, "Cannot create more AdPeriod");
         }
         long maxDisplayOrder = all.stream().mapToLong(ap -> ap.displayOrder).max().orElseGet(() -> 0L);
         AdPeriod ap = new AdPeriod();
@@ -140,7 +142,7 @@ public class AdService extends AbstractDbService<AdSlot> {
         bean.validate(false);
         AdPeriod ap = getAdPeriodById(id);
         if (isExpiredAdPeriod(ap)) {
-            throw new ApiException(ApiError.OPERATION_FAILED, "AdPeriod", "Could not update expired AdPeriod.");
+            throw new ApiException(ApiError.OPERATION_FAILED, AD_PERIOD, "Could not update expired AdPeriod.");
         }
         ap.endAt = bean.endAt;
         if (ap.endAt.compareTo(ap.startAt) <= 0) {
@@ -154,7 +156,7 @@ public class AdService extends AbstractDbService<AdSlot> {
     public void deleteAdPeriod(long id) {
         AdPeriod ap = getAdPeriodById(id);
         if (!isExpiredAdPeriod(ap)) {
-            throw new ApiException(ApiError.OPERATION_FAILED, "AdPeriod", "Could not delete non-expired AdPeriod.");
+            throw new ApiException(ApiError.OPERATION_FAILED, AD_PERIOD, "Could not delete non-expired AdPeriod.");
         }
         List<AdMaterial> ms = getAdMaterialsByAdPeriod(ap);
         this.db.remove(ms);
@@ -171,7 +173,7 @@ public class AdService extends AbstractDbService<AdSlot> {
             throw new ApiException(ApiError.PERMISSION_DENIED, "userId", "Invalid user.");
         }
         if (isExpiredAdPeriod(ap)) {
-            throw new ApiException(ApiError.OPERATION_FAILED, "AdPeriod", "Could not create AdMaterial for expired AdPeriod.");
+            throw new ApiException(ApiError.OPERATION_FAILED, AD_PERIOD, "Could not create AdMaterial for expired AdPeriod.");
         }
         bean.validate(true);
         if (this.db.from(AdMaterial.class).where("adPeriodId = ?", ap.id).count() >= 10) {
