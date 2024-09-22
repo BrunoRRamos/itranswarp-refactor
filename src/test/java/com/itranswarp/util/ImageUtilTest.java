@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
 
@@ -11,37 +12,29 @@ import org.junit.jupiter.api.Test;
 
 import com.itranswarp.bean.ImageBean;
 import com.itranswarp.common.ApiException;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class ImageUtilTest {
 
-    @Test
-    void testReadImageAsJpeg() throws IOException {
-        byte[] data = IOUtil.readAsBytes(getClass().getResourceAsStream("/400x320.jpg"));
-        ImageBean bean = ImageUtil.readImage(data);
-        assertNotNull(bean.image);
-        assertEquals(400, bean.width);
-        assertEquals(320, bean.height);
-        assertEquals("image/jpeg", bean.mime);
+    static Stream<Object[]> imageParameters() {
+        return Stream.of(
+                new Object[] {"/400x320.jpg", 400, 320, "image/jpeg"},
+                new Object[] {"/400x320.png", 400, 320, "image/png"},
+                new Object[] {"/400x320.gif", 400, 320, "image/gif"}
+        );
     }
 
-    @Test
-    void testReadImageAsPng() throws IOException {
-        byte[] data = IOUtil.readAsBytes(getClass().getResourceAsStream("/400x320.png"));
+    @ParameterizedTest
+    @MethodSource("imageParameters")
+    void testReadImage(String filePath, int expectedWidth, int expectedHeight, String expectedMimeType) throws IOException {
+        byte[] data = IOUtil.readAsBytes(getClass().getResourceAsStream(filePath));
         ImageBean bean = ImageUtil.readImage(data);
-        assertNotNull(bean.image);
-        assertEquals(400, bean.width);
-        assertEquals(320, bean.height);
-        assertEquals("image/png", bean.mime);
-    }
 
-    @Test
-    void testReadImageAsGif() throws IOException {
-        byte[] data = IOUtil.readAsBytes(getClass().getResourceAsStream("/400x320.gif"));
-        ImageBean bean = ImageUtil.readImage(data);
         assertNotNull(bean.image);
-        assertEquals(400, bean.width);
-        assertEquals(320, bean.height);
-        assertEquals("image/gif", bean.mime);
+        assertEquals(expectedWidth, bean.width);
+        assertEquals(expectedHeight, bean.height);
+        assertEquals(expectedMimeType, bean.mime);
     }
 
     @Test
