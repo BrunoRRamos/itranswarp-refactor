@@ -67,8 +67,9 @@ public class WikiService extends AbstractDbService<Wiki> {
 
     void treeIterate(Wiki root, Map<Long, WikiPage> nodes) {
         List<Long> toBeRemovedIds = new ArrayList<>();
-        for (Long id : nodes.keySet()) {
-            WikiPage node = nodes.get(id);
+        for (Map.Entry<Long, WikiPage> entry : nodes.entrySet()) {
+            Long id = entry.getKey();
+            WikiPage node = entry.getValue();
             if (node.parentId == root.id) {
                 root.addChild(node);
                 toBeRemovedIds.add(id);
@@ -76,16 +77,14 @@ public class WikiService extends AbstractDbService<Wiki> {
         }
         toBeRemovedIds.forEach(id -> {
             nodes.remove(id);
-        });
-        root.getChildren().forEach(child -> {
-            treeIterate(child, nodes);
         });
     }
 
     void treeIterate(WikiPage root, Map<Long, WikiPage> nodes) {
         List<Long> toBeRemovedIds = new ArrayList<>();
-        for (Long id : nodes.keySet()) {
-            WikiPage node = nodes.get(id);
+        for (Map.Entry<Long, WikiPage> entry : nodes.entrySet()) {
+            Long id = entry.getKey();
+            WikiPage node = entry.getValue();
             if (node.parentId == root.id) {
                 root.addChild(node);
                 toBeRemovedIds.add(id);
@@ -94,10 +93,8 @@ public class WikiService extends AbstractDbService<Wiki> {
         toBeRemovedIds.forEach(id -> {
             nodes.remove(id);
         });
-        root.getChildren().forEach(child -> {
-            treeIterate(child, nodes);
-        });
     }
+
 
     public List<Wiki> getWikis() {
         return db.from(Wiki.class).orderBy("name").list();

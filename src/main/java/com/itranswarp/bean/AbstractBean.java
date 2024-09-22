@@ -30,15 +30,17 @@ public abstract class AbstractBean {
     private static void copyProperties(Object source, Object target) throws IllegalArgumentException, IllegalAccessException {
         Map<String, Field> sourceProps = getProperties(source.getClass());
         Map<String, Field> targetProps = getProperties(target.getClass());
-        for (String name : sourceProps.keySet()) {
+        for (Map.Entry<String, Field> entry : sourceProps.entrySet()) {
+            String name = entry.getKey();
             Field targetField = targetProps.get(name);
             if (targetField != null) {
-                Field sourceField = sourceProps.get(name);
+                Field sourceField = entry.getValue();
                 Object value = sourceField.get(source);
                 targetField.set(target, value);
             }
         }
     }
+
 
     private static Map<String, Field> getProperties(Class<?> clazz) {
         String key = clazz.getName();

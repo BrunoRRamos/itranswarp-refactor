@@ -263,7 +263,7 @@ public class SchemaBuilder {
     Text initText(List<AbstractEntity> entities) {
         StringBuilder sb = new StringBuilder(1024);
         sb.append("# ").append(randomLine(10)).append("\n\n");
-        int lines = (int) (random.nextDouble() * 10) + 10;
+        int lines = random.nextInt(10) + 10;
         for (int i = 0; i < lines; i++) {
             sb.append(randomLine(20)).append("\n\n");
         }
@@ -275,6 +275,7 @@ public class SchemaBuilder {
         entities.add(t);
         return t;
     }
+
 
     void initWiki(List<AbstractEntity> entities) {
         Wiki wiki = new Wiki();
@@ -446,13 +447,14 @@ public class SchemaBuilder {
     }
 
     String randomLine(int n) {
-        int w = (int) (random.nextDouble() * n) + 1;
+        int w = random.nextInt(n) + 1;
         String[] words = new String[w];
         for (int j = 0; j < w; j++) {
-            words[j] = WORDS[(int) (random.nextDouble() * WORDS.length)];
+            words[j] = WORDS[random.nextInt(WORDS.length)];
         }
         return String.join(" ", words) + ".";
     }
+
 
     static final String[] WORDS = { "a", "ac", "accommodare", "accumsan", "accusata", "ad", "adhuc", "adipisci", "adipiscing", "adolescens", "adversarium",
             "aenean", "aeque", "affert", "agam", "alia", "alienum", "aliquam", "aliquet", "aliquid", "aliquip", "altera", "alterum", "amet", "an", "ancillae",
