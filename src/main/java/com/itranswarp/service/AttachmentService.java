@@ -105,12 +105,11 @@ public class AttachmentService extends AbstractDbService<Attachment> {
                 targetWidth = 320;
                 resize = true;
             }
-        } else if (size == 'l') {
-            if (originWidth > 640) {
+        } else if (size == 'l' && originWidth > 640) {
                 targetWidth = 640;
                 resize = true;
             }
-        }
+
         if (!resize) {
             return new DownloadBean(a.mime, r.decode());
         }
