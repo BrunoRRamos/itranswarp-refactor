@@ -18,6 +18,8 @@ import org.lionsoul.jcseg.dic.ADictionary;
 import org.lionsoul.jcseg.dic.HashMapDictionary;
 import org.lionsoul.jcseg.extractor.impl.TextRankKeywordsExtractor;
 import org.lionsoul.jcseg.segmenter.SegmenterConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -74,6 +76,8 @@ public abstract class AbstractSearcher extends AbstractService {
     private ADictionary dict;
 
     private boolean isReady = false;
+
+    private static final Logger LOGGER_CLIENT = LoggerFactory.getLogger(AbstractSearcher.class);
 
     @PostConstruct
     public void init() throws Exception {
@@ -151,7 +155,7 @@ public abstract class AbstractSearcher extends AbstractService {
              */
             dic.resetSynonymsNet();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER_CLIENT.error("context", e);
         }
 
         return dic;
