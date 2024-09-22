@@ -46,7 +46,7 @@ public class BilibiliLinkPlugin implements PatternLinkRenderer {
     String width = "100%";
 
     @Value("${spring.markdown.plugins.bilibili.height:" + DEFAULT_HEIGHT + "}")
-    String height = "480px";
+    String height = DEFAULT_HEIGHT;
 
     String style = "width:" + DEFAULT_WIDTH + ";height:" + DEFAULT_HEIGHT;
 

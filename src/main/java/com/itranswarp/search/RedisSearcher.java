@@ -26,6 +26,8 @@ import io.lettuce.core.RedisCommandExecutionException;
 @Component
 public class RedisSearcher extends AbstractSearcher {
 
+    static final String CONTENT = "content";
+
     static final String REDISEARCH_INDEX_NAME = "idx:doc";
 
     @Value("${spring.search.redisearch.default-language:CHINESE}")
@@ -44,7 +46,7 @@ public class RedisSearcher extends AbstractSearcher {
                 String result = commands.create(REDISEARCH_INDEX_NAME, cob.build(),
                         // fields:
                         Field.numeric("id").noIndex().build(), Field.numeric("publishAt").build(), Field.tag("type").build(),
-                        Field.text("name").weight(10).build(), Field.text("description").weight(5).build(), Field.text("content").weight(1).build(),
+                        Field.text("name").weight(10).build(), Field.text("description").weight(5).build(), Field.text(CONTENT).weight(1).build(),
                         Field.text("url").noIndex().build());
                 logger.info("FT.CREATE language {}, index {}: {}", REDISEARCH_INDEX_NAME, this.defaultLanguage, result);
                 return IndexStatus.CREATED;
@@ -73,7 +75,7 @@ public class RedisSearcher extends AbstractSearcher {
             NumericFilter<String, String> publishFilter = new NumericFilter<>("publishAt", 0, System.currentTimeMillis());
 
             Summarize<String, String> sm = new Summarize<>();
-            sm.setFields(List.of("content"));
+            sm.setFields(List.of(CONTENT));
             sm.setLength(64);
             sm.setFrags(3);
             SearchOptions.Builder<String, String> builder = SearchOptions.builder();
@@ -89,7 +91,7 @@ public class RedisSearcher extends AbstractSearcher {
             logger.debug("search results: count = {}", sr.getCount());
             sr.forEach(doc -> {
                 logger.debug("result id = {}: type = {}, name = {}, url = {}, content = {}", doc.getId(), doc.get("type"), doc.get("name"), doc.get("url"),
-                        doc.get("content"));
+                        doc.get(CONTENT));
             });
         }
 
@@ -102,7 +104,7 @@ public class RedisSearcher extends AbstractSearcher {
             sd.type = doc.get("type");
             sd.name = doc.get("name");
             sd.url = doc.get("url");
-            String content = doc.get("content");
+            String content = doc.get(CONTENT);
             if (content.length() > 300) {
                 content = content.substring(0, 300) + "...";
             }
@@ -118,7 +120,7 @@ public class RedisSearcher extends AbstractSearcher {
         executeSearch(commands -> {
             for (SearchableDocument doc : documents) {
                 commands.hset("doc:" + doc.id,
-                        Map.of("type", doc.type, "name", doc.name, "content", doc.content, "publishAt", String.valueOf(doc.publishAt), "url", doc.url));
+                        Map.of("type", doc.type, "name", doc.name, CONTENT, doc.content, "publishAt", String.valueOf(doc.publishAt), "url", doc.url));
             }
             logger.info("{} docs indexed.", documents.size());
             return documents.size();
