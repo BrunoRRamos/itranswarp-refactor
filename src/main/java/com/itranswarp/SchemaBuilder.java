@@ -68,8 +68,8 @@ public class SchemaBuilder {
             writer.write(inserts);
         }
         System.out.println("\nGenerated SQL:\n" + ddl);
-        System.out.println("\nRun generated SQL:\n\nmysql -u root --password=password < " + ddlFile);
-        System.out.println("\nmysql -u root --password=password < " + initFile);
+        System.out.println("\nRun generated SQL:\n\nAdding file: " + ddlFile);
+        System.out.println("\nInit file: " + initFile);
     }
 
     String dbName = "it";
