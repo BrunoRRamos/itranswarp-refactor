@@ -36,8 +36,8 @@ import com.itranswarp.markdown.PatternLinkRenderer;
 public class BilibiliLinkPlugin implements PatternLinkRenderer {
 
     static final String URL_PREFIX = "https://www.bilibili.com/video/";
-    static final Pattern ID1_PATTERN = Pattern.compile("^av(\\d+).*$");
-    static final Pattern ID2_PATTERN = Pattern.compile("^BV(\\w+).*$");
+    static final Pattern ID1_PATTERN = Pattern.compile("^av(\\d+)$");
+    static final Pattern ID2_PATTERN = Pattern.compile("^BV(\\w+)$");
 
     static final String DEFAULT_WIDTH = "100%";
     static final String DEFAULT_HEIGHT = "480px";
