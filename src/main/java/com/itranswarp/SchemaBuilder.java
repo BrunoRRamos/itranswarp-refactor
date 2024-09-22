@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -46,8 +47,8 @@ import com.itranswarp.warpdb.WarpDb;
  * Generate database schema for API server.
  */
 public class SchemaBuilder {
-
-    static final Random random = new Random(1234567890L);
+    static byte[] bytes = new byte[20];
+    static final Random random = new SecureRandom(bytes);
     static ZonedDateTime base = LocalDateTime.of(2022, 2, 22, 22, 22, 22).atZone(ZoneId.of("Z"));
 
     static long currentTimeMillis() {
@@ -68,8 +69,8 @@ public class SchemaBuilder {
             writer.write(inserts);
         }
         System.out.println("\nGenerated SQL:\n" + ddl);
-        System.out.println("\nRun generated SQL:\n\nmysql -u root --password=password < " + ddlFile);
-        System.out.println("\nmysql -u root --password=password < " + initFile);
+        System.out.println("\nRun generated SQL:\n\nAdding file: " + ddlFile);
+        System.out.println("\nInit file: " + initFile);
     }
 
     String dbName = "it";
